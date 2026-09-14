@@ -19,6 +19,12 @@ TRAILING_PUNCT_RE = re.compile(r"[.,)\]]+$")
 _DOWNLOAD_TOKENS = ("wget", "curl")
 _PIPE_TO_SHELL_RE = re.compile(r"\|\s*(?:/bin/)?(?:ba)?sh\b")
 
+# AL4 represents a directly-submitted URL (accepts: uri/.*) as a small synthetic text
+# file: "# Assemblyline URI file\nuri: <url>\n". A line matching this shape is the
+# submission's own target, not something discovered inside script content -- worth its
+# own distinct context label rather than the generic "unknown" fallback.
+_URI_SUBMISSION_LINE_RE = re.compile(r"^\s*uri:\s*https?://", re.IGNORECASE)
+
 
 @dataclass
 class ExtractedURL:
@@ -31,6 +37,8 @@ class ExtractedURL:
 
 
 def _context_for_line(line: str) -> str:
+    if _URI_SUBMISSION_LINE_RE.match(line):
+        return "submitted_url"
     if _PIPE_TO_SHELL_RE.search(line):
         return "curl|sh"
     lowered = line.lower()

