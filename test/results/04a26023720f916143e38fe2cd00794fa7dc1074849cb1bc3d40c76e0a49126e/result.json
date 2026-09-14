@@ -1,0 +1,101 @@
+{
+  "extra": {
+    "drop_file": false,
+    "score": 100,
+    "sections": [
+      {
+        "auto_collapse": false,
+        "body": [
+          {
+            "name": "wget",
+            "url": "http://payload.test/x"
+          }
+        ],
+        "body_config": {},
+        "body_format": "URL",
+        "classification": "TLP:C",
+        "depth": 0,
+        "heuristic": null,
+        "promote_to": null,
+        "tags": {},
+        "title_text": "Candidate URLs extracted from script",
+        "zeroize_on_tag_safe": false
+      },
+      {
+        "auto_collapse": false,
+        "body": [
+          {
+            "content_type_header": "application/octet-stream",
+            "context": "wget",
+            "http_status": 200,
+            "outcome": "fetched",
+            "sha256": "b9a930b139994760589e3d22af790f335179d7ebb2dbf17e7a885fa592742b7b",
+            "size": 28,
+            "sniffed_type": "unknown",
+            "url": "http://payload.test/x"
+          }
+        ],
+        "body_config": {
+          "column_order": [
+            "url",
+            "context",
+            "outcome",
+            "http_status",
+            "content_type_header",
+            "sniffed_type",
+            "size",
+            "sha256"
+          ]
+        },
+        "body_format": "TABLE",
+        "classification": "TLP:C",
+        "depth": 0,
+        "heuristic": {
+          "attack_ids": [
+            "T1105"
+          ],
+          "frequency": 1,
+          "heur_id": 1,
+          "score": 100,
+          "score_map": {},
+          "signatures": {
+            "other": 1
+          }
+        },
+        "promote_to": null,
+        "tags": {},
+        "title_text": "Fetch results",
+        "zeroize_on_tag_safe": false
+      }
+    ]
+  },
+  "files": {
+    "extracted": [
+      {
+        "name": "b9a930b139994760589e3d22af790f335179d7ebb2dbf17e7a885fa592742b7b",
+        "sha256": "b9a930b139994760589e3d22af790f335179d7ebb2dbf17e7a885fa592742b7b"
+      }
+    ],
+    "supplementary": [
+      {
+        "name": "url_fetch_log.json",
+        "sha256": "87c6d33feaeaddfabe2bfb1c0851a4272f60956d021c331a07b95491d4242d36"
+      }
+    ]
+  },
+  "results": {
+    "heuristics": [
+      {
+        "attack_ids": [
+          "T1105"
+        ],
+        "heur_id": 1,
+        "signatures": [
+          "other"
+        ]
+      }
+    ],
+    "tags": {},
+    "temp_submission_data": {}
+  }
+}

@@ -1,0 +1,91 @@
+name: PayloadFetcher
+version: $SERVICE_TAG
+description: >
+  Extracts candidate payload URLs/IPs embedded in scripts (shell, PHP, etc.) and directly
+  fetches them, classifying the response by its real bytes (not the URL's extension) so
+  AL4 can recursively analyze whatever a dropper/loader script actually pulls down.
+
+accepts: code/.*|text/plain
+rejects: empty|metadata/.*
+
+stage: CORE
+category: Internet Connected
+file_required: true
+timeout: 180
+disable_cache: false
+enabled: true
+is_external: false
+licence_count: 0
+
+submission_params:
+  - name: max_urls
+    type: int
+    default: 10
+    value: 10
+  - name: fetch_timeout_seconds
+    type: int
+    default: 10
+    value: 10
+  - name: max_download_size_mb
+    type: int
+    default: 25
+    value: 25
+  - name: max_redirects
+    type: int
+    default: 3
+    value: 3
+  - name: user_agent
+    type: str
+    default: "Mozilla/5.0 (AssemblyLine PayloadFetcher)"
+    value: "Mozilla/5.0 (AssemblyLine PayloadFetcher)"
+  - name: dry_run
+    type: bool
+    default: false
+    value: false
+
+heuristics:
+  - heur_id: 1
+    name: Fetched payload from extracted URL
+    description: Successfully retrieved live content referenced by a download/execute command in the script.
+    filetype: ".*"
+    score: 100
+    max_score: 1000
+    signature_score_map:
+      executable: 500
+      script: 400
+      webshell_or_html: 200
+      other: 100
+    attack_id: T1105
+  - heur_id: 2
+    name: Multi-architecture loader pattern
+    description: Four or more architecture-specific payload URLs on a single host (Mirai/Gafgyt-style loader shape).
+    filetype: ".*"
+    score: 300
+    attack_id: T1105
+  - heur_id: 3
+    name: SSRF-risk target blocked
+    description: An extracted URL (or a redirect target) resolved to a private/loopback/link-local/metadata address and was not fetched.
+    filetype: ".*"
+    score: 0
+  - heur_id: 4
+    name: Fetched content type does not match URL's apparent extension
+    description: The URL's extension (e.g. .php) does not match what was actually served (e.g. an executable/script) — a known evasion pattern.
+    filetype: ".*"
+    score: 150
+  - heur_id: 5
+    name: Fetch failed or unreachable
+    description: The extracted URL could not be reached (timeout, connection error, HTTP error, oversize response).
+    filetype: ".*"
+    score: 0
+  - heur_id: 6
+    name: Templated URL not dispatched
+    description: An extracted URL contained an unresolved shell variable/glob and was reported but not fetched literally.
+    filetype: ".*"
+    score: 0
+
+docker_config:
+  image: kylemc54321/assemblyline-service-payloadfetcher:$SERVICE_TAG
+  cpu_cores: 1
+  ram_mb_min: 128
+  ram_mb: 512
+  allow_internet_access: true
