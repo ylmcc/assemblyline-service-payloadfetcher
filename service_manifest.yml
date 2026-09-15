@@ -6,7 +6,7 @@ description: >
   AL4 can recursively analyze whatever a dropper/loader script actually pulls down. Also
   accepts a directly-submitted URL (AL4's uri/* file type) and fetches that URL itself.
 
-accepts: code/.*|text/plain|uri/.*
+accepts: code/(?!html).*|text/plain|uri/.*
 rejects: empty|metadata/.*
 
 stage: CORE
@@ -17,6 +17,8 @@ disable_cache: false
 enabled: true
 is_external: false
 licence_count: 0
+recursion_prevention:
+  - PayloadFetcher
 
 submission_params:
   - name: max_urls

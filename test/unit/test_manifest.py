@@ -41,3 +41,23 @@ def test_accepts_does_not_match_empty_or_metadata():
     pattern = _accepts_pattern()
     assert not pattern.fullmatch("empty")
     assert not pattern.fullmatch("metadata/whatever")
+
+
+def test_accepts_does_not_match_html():
+    # The bug this test guards against: a fetched web page is sniffed as code/html,
+    # which the old "code/.*" accepts regex matched -- so AL4 re-dispatched
+    # PayloadFetcher onto its own downloaded HTML, which extracted the page's
+    # ordinary embedded asset/link URLs (images, other pages) as if they were
+    # dropper payload URLs and fetched those too, snowballing recursively until
+    # AL4's own submission-wide extraction/depth limit killed it. Confirmed on a
+    # live submission ("3ymlEk2P5hoohHsvONTkoh"): 528 extracted files and
+    # "MAX DEPTH REACHED" / FAIL_NONRECOVERABLE errors from a single input file.
+    # service_manifest.yml also sets recursion_prevention: [PayloadFetcher] as a
+    # second, platform-level guard against this same self-feeding loop.
+    pattern = _accepts_pattern()
+    assert not pattern.fullmatch("code/html")
+
+
+def test_recursion_prevention_lists_self():
+    manifest = yaml.safe_load(MANIFEST_PATH.read_text())
+    assert manifest.get("recursion_prevention") == ["PayloadFetcher"]
