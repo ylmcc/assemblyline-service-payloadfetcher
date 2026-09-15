@@ -6,8 +6,8 @@ description: >
   AL4 can recursively analyze whatever a dropper/loader script actually pulls down. Also
   accepts a directly-submitted URL (AL4's uri/* file type) and fetches that URL itself.
 
-accepts: code/(?!html).*|text/plain|uri/.*
-rejects: empty|metadata/.*
+accepts: code/.*|text/plain|uri/.*
+rejects: empty|metadata/.*|code/html
 
 stage: CORE
 category: Internet Connected
