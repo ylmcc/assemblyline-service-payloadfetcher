@@ -3,9 +3,10 @@ version: $SERVICE_TAG
 description: >
   Extracts candidate payload URLs/IPs embedded in scripts (shell, PHP, etc.) and directly
   fetches them, classifying the response by its real bytes (not the URL's extension) so
-  AL4 can recursively analyze whatever a dropper/loader script actually pulls down.
+  AL4 can recursively analyze whatever a dropper/loader script actually pulls down. Also
+  accepts a directly-submitted URL (AL4's uri/* file type) and fetches that URL itself.
 
-accepts: code/.*|text/plain
+accepts: code/(?!html).*|text/plain|uri/.*
 rejects: empty|metadata/.*
 
 stage: CORE
@@ -16,6 +17,8 @@ disable_cache: false
 enabled: true
 is_external: false
 licence_count: 0
+recursion_prevention:
+  - PayloadFetcher
 
 submission_params:
   - name: max_urls
