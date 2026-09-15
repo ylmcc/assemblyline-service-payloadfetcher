@@ -27,6 +27,7 @@ from assemblyline_v4_service.common.task import PARENT_RELATION
 
 from payload_fetcher.extraction import dedupe_and_cap, extract_urls, has_multi_arch_loader_pattern
 from payload_fetcher.fetcher import fetch_url
+from payload_fetcher.user_agents import RANDOM_SENTINEL, pick_user_agent
 
 _MISMATCH_PRONE_EXTENSIONS = {".php", ".html", ".htm", ".txt", ".asp", ".aspx", ".jsp"}
 _RISKY_SIGNATURES = {"executable", "script"}
@@ -59,7 +60,15 @@ class PayloadFetcher(ServiceBase):
         fetch_timeout = request.get_param("fetch_timeout_seconds")
         max_size = request.get_param("max_download_size_mb") * 1024 * 1024
         max_redirects = request.get_param("max_redirects")
-        user_agent = request.get_param("user_agent")
+        # user_agent is a manifest-configurable dropdown (service_manifest.yml,
+        # payload_fetcher/user_agents.py) of realistic browser UA strings, plus a
+        # "(random)" choice (the default): some malware-hosting infrastructure serves
+        # a decoy/blocks outright to a self-identifying UA. Picked once per
+        # submission, not per URL, so a single submission's fetches look like one
+        # consistent browser session. An analyst can still pin one specific UA
+        # through the dropdown instead of a random pick.
+        user_agent_choice = request.get_param("user_agent")
+        user_agent = pick_user_agent() if user_agent_choice == RANDOM_SENTINEL else user_agent_choice
 
         kept, dropped = dedupe_and_cap(candidates, max_urls)
         to_fetch = [c for c in kept if not c.has_shell_interpolation]

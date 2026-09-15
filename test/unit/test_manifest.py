@@ -94,3 +94,20 @@ def test_accepts_and_rejects_contain_no_lookaround():
 def test_recursion_prevention_lists_self():
     manifest = _manifest()
     assert manifest.get("recursion_prevention") == ["PayloadFetcher"]
+
+
+def test_user_agent_param_list_matches_pool():
+    # service_manifest.yml's user_agent dropdown and payload_fetcher/user_agents.py's
+    # REALISTIC_USER_AGENTS are two representations of the same pool, kept in sync
+    # deliberately rather than automatically (the manifest is what an analyst edits
+    # to customize the pool; the Python list is what pick_user_agent() actually
+    # selects from at runtime). This test is the tripwire for them drifting apart.
+    from payload_fetcher.user_agents import RANDOM_SENTINEL, REALISTIC_USER_AGENTS
+
+    manifest = _manifest()
+    param = next(p for p in manifest["submission_params"] if p["name"] == "user_agent")
+    assert param["type"] == "list"
+    assert param["default"] == RANDOM_SENTINEL
+    assert param["value"] == RANDOM_SENTINEL
+    assert param["list"][0] == RANDOM_SENTINEL
+    assert param["list"][1:] == REALISTIC_USER_AGENTS
