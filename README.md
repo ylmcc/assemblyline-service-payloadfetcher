@@ -26,6 +26,9 @@ rest of the AssemblyLine pipeline can recursively analyze it.
 - **Resource limits**: per-fetch connect/read timeout, a hard streamed-download byte cap
   (aborted mid-stream), a capped number of redirects, and a capped number of URLs fetched
   per submission (deduped first).
+- **`verify_ssl=false` weakens only certificate validation.** The per-hop SSRF check,
+  redirect cap, size cap and timeouts are identical whether it is on or off; the fetched
+  bytes were never trusted in the first place (they are only hashed and identified).
 - **Known limitation**: the SSRF check is a point-in-time DNS resolution at fetch time, not
   full protection against DNS-rebinding (re-resolving to a different address between the
   check and the actual connection). Full rebinding protection (e.g. pinning the checked IP
@@ -46,7 +49,8 @@ infrastructure.
 | `fetch_timeout_seconds` | 10 | Connect/read timeout per fetch. |
 | `max_download_size_mb` | 25 | Hard cap on a single fetched response, enforced while streaming. |
 | `max_redirects` | 3 | Max redirect hops followed (each re-checked for SSRF). |
-| `user_agent` | `Mozilla/5.0 (AssemblyLine PayloadFetcher)` | UA header sent on fetches. |
+| `user_agent` | `(random)` | UA header sent on fetches: a fixed browser UA from the dropdown, or a random pick (once per submission). |
+| `verify_ssl` | false | Verify TLS certificates on HTTPS fetches (every redirect hop). Off by default because malware hosts commonly use self-signed or expired certificates, which would otherwise prevent the payload being retrieved. When off, urllib3's `InsecureRequestWarning` is suppressed (scoped to the fetch call, not process-wide) and the "Fetch results" section carries a "TLS certificate verification" note. When on, a certificate/handshake failure is reported as `ssl_error: ...` (distinct from `connection_error`) with a hint to resubmit with `verify_ssl=false`. |
 | `dry_run` | false | Extract and report candidate URLs but skip the actual network fetch. |
 
 ## Development
@@ -55,9 +59,12 @@ This system's Python is externally managed (PEP 668); use an isolated virtualenv
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install assemblyline-v4-service assemblyline-service-utilities pytest requests requests-mock
+.venv/bin/pip install assemblyline-v4-service assemblyline-service-utilities pytest requests requests-mock cryptography pyyaml
 .venv/bin/pytest test/
 ```
+
+Tests that stand up a local self-signed HTTPS stub (`test/unit/test_verify_ssl.py`) need
+`cryptography` and skip themselves without it.
 
 No test in this repo ever executes a sample, fetches a real URL, or resolves a real
 hostname — the network layer is mocked (`requests_mock`) and DNS resolution is mocked

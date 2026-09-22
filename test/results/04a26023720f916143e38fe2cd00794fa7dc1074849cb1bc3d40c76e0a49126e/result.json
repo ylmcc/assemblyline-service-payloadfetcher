@@ -66,6 +66,19 @@
         "tags": {},
         "title_text": "Fetch results",
         "zeroize_on_tag_safe": false
+      },
+      {
+        "auto_collapse": false,
+        "body": "Certificate verification was OFF (verify_ssl=false): TLS certificates of HTTPS targets were not validated, so invalid, expired or self-signed certificates do not block fetching.",
+        "body_config": {},
+        "body_format": "TEXT",
+        "classification": "TLP:C",
+        "depth": 1,
+        "heuristic": null,
+        "promote_to": null,
+        "tags": {},
+        "title_text": "TLS certificate verification",
+        "zeroize_on_tag_safe": false
       }
     ]
   },
@@ -79,7 +92,7 @@
     "supplementary": [
       {
         "name": "url_fetch_log.json",
-        "sha256": "87c6d33feaeaddfabe2bfb1c0851a4272f60956d021c331a07b95491d4242d36"
+        "sha256": "e2a72f7a9b7e312b2dd4b58911b9afce5a43846a5afc42f0a59a31664cac6885"
       }
     ]
   },

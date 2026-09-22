@@ -60,6 +60,10 @@ class PayloadFetcher(ServiceBase):
         fetch_timeout = request.get_param("fetch_timeout_seconds")
         max_size = request.get_param("max_download_size_mb") * 1024 * 1024
         max_redirects = request.get_param("max_redirects")
+        # verify_ssl defaults to false: malware hosts commonly use self-signed/expired
+        # certs, and verifying would stop the payload from ever being retrieved. The SSRF
+        # guard, redirect/size caps and timeouts are unaffected by this setting.
+        verify_ssl = bool(request.get_param("verify_ssl"))
         # user_agent is a manifest-configurable dropdown (service_manifest.yml,
         # payload_fetcher/user_agents.py) of realistic browser UA strings, plus a
         # "(random)" choice (the default): some malware-hosting infrastructure serves
@@ -78,6 +82,7 @@ class PayloadFetcher(ServiceBase):
         audit_log = {
             "extracted_count": len(candidates),
             "kept_count": len(kept),
+            "verify_ssl": verify_ssl,
             "dropped_by_cap": dropped,
             "to_fetch": [c.url for c in to_fetch],
             "templated_not_dispatched": [c.truncated_template for c in templated],
@@ -127,6 +132,16 @@ class PayloadFetcher(ServiceBase):
         heur4 = None
         heur5 = None
         table = ResultTableSection("Fetch results") if to_fetch else None
+        if table is not None and not dry_run:
+            table.add_subsection(ResultSection(
+                "TLS certificate verification",
+                body=("Certificate verification was ON (verify_ssl=true); HTTPS targets with "
+                      "invalid, expired or self-signed certificates fail as 'ssl_error'."
+                      if verify_ssl else
+                      "Certificate verification was OFF (verify_ssl=false): TLS certificates of "
+                      "HTTPS targets were not validated, so invalid, expired or self-signed "
+                      "certificates do not block fetching."),
+            ))
 
         for c in to_fetch:
             if dry_run:
@@ -134,7 +149,10 @@ class PayloadFetcher(ServiceBase):
                 audit_log["fetches"].append({"url": c.url, "outcome": "skipped(dry_run)"})
                 continue
 
-            fr = fetch_url(c.url, self.working_directory, fetch_timeout, max_size, max_redirects, user_agent)
+            fr = fetch_url(
+                c.url, self.working_directory, fetch_timeout, max_size, max_redirects, user_agent,
+                verify_ssl=verify_ssl,
+            )
 
             if not fr.ok:
                 if fr.error.startswith("ssrf_blocked"):
@@ -214,7 +232,8 @@ class PayloadFetcher(ServiceBase):
             failed_section = ResultSection(
                 "Unreachable targets",
                 body="One or more extracted URLs could not be fetched (timeout, connection "
-                     "error, oversize response, or too many redirects).",
+                     "error, TLS/certificate error when verify_ssl is on, oversize response, "
+                     "or too many redirects).",
             )
             failed_section.set_heuristic(heur5)
             result.add_section(failed_section)
