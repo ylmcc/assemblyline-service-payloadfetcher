@@ -91,10 +91,19 @@ class PayloadFetcher(ServiceBase):
 
         if kept:
             url_section = ResultURLSection("Candidate URLs extracted from script")
-            for c in to_fetch:
-                url_section.add_url(c.url, name=c.context)
-            for c in templated:
-                url_section.add_url(c.truncated_template or c.raw, name=f"{c.context} (templated, not fetched)")
+            unlisted = []
+            for url, name in ([(c.url, c.context) for c in to_fetch]
+                              + [(c.truncated_template or c.raw, f"{c.context} (templated, not fetched)")
+                                 for c in templated]):
+                # AL's URL body refuses anything it can't parse as a URL (e.g. a template
+                # truncated to a bare "http://"); one such entry used to fail the whole result.
+                try:
+                    url_section.add_url(url, name=name)
+                except ValueError:
+                    unlisted.append(f"{name}: {url}")
+            if unlisted:
+                ResultSection("Candidates AL could not render as URLs", body="\n".join(unlisted),
+                              parent=url_section)
             result.add_section(url_section)
 
         if dropped:

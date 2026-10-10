@@ -38,6 +38,9 @@ def resolve_and_check(hostname: str) -> SSRFCheckResult:
         infos = socket.getaddrinfo(hostname, None)
     except socket.gaierror as e:
         return SSRFCheckResult([], False, f"dns_resolution_failed: {e}")
+    except (UnicodeError, ValueError) as e:
+        # e.g. a hostname label over 63 chars fails IDNA encoding before any DNS lookup
+        return SSRFCheckResult([], False, f"invalid_hostname: {e}")
 
     ips = sorted({info[4][0] for info in infos})
     for ip_str in ips:
